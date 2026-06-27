@@ -238,9 +238,11 @@ const Editor: Component = () => {
 							value={body()}
 							onInput={onBodyInput}
 							placeholder="ここに物語を..."
-							ref={() => {
-								requestAnimationFrame(() => {
-									if (mainRef) mainRef.scrollTop = mainRef.scrollHeight;
+							ref={(_el) => {
+								void document.fonts.ready.then(() => {
+									requestAnimationFrame(() => {
+										if (mainRef) mainRef.scrollTop = mainRef.scrollHeight;
+									});
 								});
 							}}
 						/>
