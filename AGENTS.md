@@ -4,6 +4,35 @@
 
 ---
 
+## 開発ロードマップ (GitHub Project)
+
+**Kanban ボード**: https://github.com/users/hakatashi/projects/1
+
+各フェーズの実装タスクを GitHub Project で管理しています。**新機能の実装完了時は必ずプロジェクトのステータスを更新してください。**
+
+| ステータス | 意味 |
+|---|---|
+| Todo | 未着手 |
+| In Progress | 実装中 (PRがオープンの状態) |
+| Done | 実装完了・マージ済み |
+
+### ステータス更新コマンド例
+```bash
+# Issue をクローズ (Done に相当)
+GITHUB_TOKEN="" gh issue close <issue番号> --repo hakatashi/ai-novelist-client
+
+# Project アイテムのステータスを変更
+GITHUB_TOKEN="" gh project item-edit --id <item-id> \
+  --project-id "PVT_kwHOAC-01M4Bb0Mf" \
+  --field-id "PVTSSF_lAHOAC-01M4Bb0MfzhWh5W8" \
+  --single-select-option-id "<status-id>"
+# status-id: Todo=f75ad846 / In Progress=47fc9ee4 / Done=98236657
+```
+
+**注意**: `gh` コマンド実行時は `GITHUB_TOKEN=""` を先頭に付けて、~/.config/gh に保存されたトークン (project スコープ付き) を使用すること。環境変数の `GITHUB_TOKEN` は project スコープを持っていない。
+
+---
+
 ## プロジェクト概要
 
 個人向けのLLMを活用した小説執筆支援Webアプリ。執筆中の小説の続きをLLMに生成させながら書き継いでいく形式（NovelAI / AIのべりすと スタイル）。
