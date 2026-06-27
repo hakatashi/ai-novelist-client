@@ -5,7 +5,7 @@ import {useEditor} from '~/lib/useEditor';
 import styles from './index.module.css';
 
 type ColorTheme = 'cream' | 'light' | 'dark';
-type FontKey = 'mincho' | 'gothic' | 'mono';
+type FontKey = 'notoSerif' | 'yuGothic' | 'notoSans' | 'tsukuMin' | 'ryumin';
 
 type CSSVars = Record<`--${string}`, string>;
 
@@ -61,10 +61,11 @@ const THEMES: Record<ColorTheme, CSSVars> = {
 };
 
 const FONTS: Record<FontKey, string> = {
-	mincho: "'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif CJK JP', serif",
-	gothic:
-		"-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic UI', sans-serif",
-	mono: "'SFMono-Regular', 'Fira Code', 'Courier New', monospace",
+	notoSerif: "'Noto Serif CJK JP', 'Yu Mincho', 'ProN', serif",
+	yuGothic: "'Yu Gothic', 'Hiragino Sans', 'Meiryo', sans-serif",
+	notoSans: "'Noto Sans CJK JP', 'Yu Gothic UI', 'Hiragino Sans', sans-serif",
+	tsukuMin: "'FOT-TsukuMin Pro', 'Hiragino Mincho Pro', 'Yu Mincho', serif",
+	ryumin: "'A-OTF Ryumin Pr5 KL', 'Hiragino Mincho Pro', 'Yu Mincho', serif",
 };
 
 const THEME_LABELS: Record<ColorTheme, string> = {
@@ -74,9 +75,11 @@ const THEME_LABELS: Record<ColorTheme, string> = {
 };
 
 const FONT_LABELS: Record<FontKey, string> = {
-	mincho: '明朝体',
-	gothic: 'ゴシック体',
-	mono: '等幅',
+	notoSerif: 'Noto Serif',
+	yuGothic: '游ゴシック',
+	notoSans: 'Noto Sans',
+	tsukuMin: '筑紫明朝',
+	ryumin: 'リュウミン',
 };
 
 function loadPref<T extends string>(key: string, fallback: T): T {
@@ -107,11 +110,12 @@ const Editor: Component = () => {
 	} = useEditor();
 
 	const [settingsOpen, setSettingsOpen] = createSignal(false);
+	let mainRef: HTMLElement | undefined;
 	const [colorTheme, setColorTheme] = createSignal<ColorTheme>(
 		loadPref<ColorTheme>('editor-theme', 'cream'),
 	);
 	const [fontFamily, setFontFamily] = createSignal<FontKey>(
-		loadPref<FontKey>('editor-font', 'mincho'),
+		loadPref<FontKey>('editor-font', 'notoSerif'),
 	);
 
 	const updateTheme = (t: ColorTheme) => {
@@ -218,7 +222,12 @@ const Editor: Component = () => {
 				</div>
 			</header>
 
-			<main class={styles.main}>
+			<main
+				class={styles.main}
+				ref={(el) => {
+					mainRef = el;
+				}}
+			>
 				<Doc
 					data={novelData}
 					fallback={<span class={styles.loading}>読み込み中...</span>}
@@ -229,6 +238,11 @@ const Editor: Component = () => {
 							value={body()}
 							onInput={onBodyInput}
 							placeholder="ここに物語を..."
+							ref={() => {
+								requestAnimationFrame(() => {
+									if (mainRef) mainRef.scrollTop = mainRef.scrollHeight;
+								});
+							}}
 						/>
 					)}
 				</Doc>

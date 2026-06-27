@@ -136,7 +136,7 @@
 .main {
 	flex: 1;
 	overflow-y: auto;
-	padding: 2.5rem 2rem 7rem;
+	padding: 2rem 2rem 1rem;
 	display: flex;
 	flex-direction: column;
 }
@@ -151,7 +151,7 @@
 	width: 100%;
 	max-width: 80rem;
 	margin: 0 auto;
-	min-height: calc(100vh - 8rem);
+	flex: 1 0 0;
 	border: none;
 	outline: none;
 	resize: none;
@@ -161,6 +161,7 @@
 	background: transparent;
 	color: var(--text);
 	transition: color 0.2s;
+	padding-bottom: 5rem;
 }
 
 .bodyTextarea::placeholder {
