@@ -1,4 +1,4 @@
-import {MemoryRouter} from '@solidjs/router';
+import {MemoryRouter, Route} from '@solidjs/router';
 import {render, waitFor} from '@solidjs/testing-library';
 import {expect, test} from 'vitest';
 import Index from './index.js';
@@ -6,7 +6,7 @@ import Index from './index.js';
 test('has create novel button', async () => {
 	const {getByRole} = render(() => (
 		<MemoryRouter>
-			<Index />
+			<Route path="/*" component={Index} />
 		</MemoryRouter>
 	));
 	const createButton = getByRole('button');
@@ -16,7 +16,7 @@ test('has create novel button', async () => {
 test('shows empty state when no novels exist', async () => {
 	const {findByText} = render(() => (
 		<MemoryRouter>
-			<Index />
+			<Route path="/*" component={Index} />
 		</MemoryRouter>
 	));
 	const emptyMessage = await waitFor(
