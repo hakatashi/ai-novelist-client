@@ -36,7 +36,10 @@ export const generateCompletion = onCall(
 		};
 
 		if (!novelId || !prompt) {
-			throw new HttpsError('invalid-argument', 'novelId and prompt are required');
+			throw new HttpsError(
+				'invalid-argument',
+				'novelId and prompt are required',
+			);
 		}
 
 		loggerInfo('Generating completion', {novelId, model});
