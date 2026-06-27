@@ -50,7 +50,7 @@ export const generateCompletion = onCall(
 		if (model === 'gemini') {
 			const genAI = new GoogleGenerativeAI(geminiApiKey.value());
 			const geminiModel = genAI.getGenerativeModel({
-				model: 'gemini-2.5-flash',
+				model: 'gemini-3.1-flash-lite',
 				generationConfig: {
 					temperature: params.temperature,
 					maxOutputTokens: params.maxTokens,
