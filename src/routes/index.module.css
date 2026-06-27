@@ -1,12 +1,66 @@
-ul.tasks {
-	width: 42rem;
-	margin: 1rem auto;
-	list-style-type: none;
-	padding: 0;
+.container {
+	max-width: 800px;
+	margin: 0 auto;
+	padding: 2rem 1rem;
 }
 
-li.task {
-	padding: 10px;
-	border: 1px solid #ccc;
-	margin-bottom: 10px;
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 2rem;
+}
+
+.title {
+	margin: 0;
+	font-size: 1.5rem;
+	font-weight: bold;
+}
+
+.createButton {
+	padding: 0.5rem 1.25rem;
+	background-color: #4f46e5;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 0.9rem;
+	cursor: pointer;
+	transition: background-color 0.15s;
+}
+
+.createButton:hover {
+	background-color: #4338ca;
+}
+
+.novelCard {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 1rem 1.25rem;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	margin-bottom: 0.75rem;
+	text-decoration: none;
+	color: inherit;
+	transition: background-color 0.15s;
+}
+
+.novelCard:hover {
+	background-color: #f9fafb;
+}
+
+.novelTitle {
+	font-size: 1rem;
+	font-weight: 500;
+}
+
+.novelDate {
+	font-size: 0.8rem;
+	color: #6b7280;
+}
+
+.empty {
+	text-align: center;
+	color: #6b7280;
+	padding: 3rem 0;
 }

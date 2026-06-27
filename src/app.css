@@ -1,3 +1,9 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
 body {
 	margin: 0;
 	font-family:
@@ -5,9 +11,78 @@ body {
 		'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	color: #111827;
+	background-color: #fff;
 }
 
-code {
-	font-family:
-		source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+.auth-loading {
+	height: 100vh;
+}
+
+.auth-screen {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 100vh;
+	background-color: #f3f4f6;
+}
+
+.auth-card {
+	background: white;
+	border-radius: 12px;
+	padding: 2.5rem 3rem;
+	box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+	text-align: center;
+	max-width: 400px;
+	width: 100%;
+}
+
+.auth-card h1 {
+	margin: 0 0 0.5rem;
+	font-size: 1.5rem;
+}
+
+.auth-card p:not(.auth-email) {
+	color: #6b7280;
+	margin: 0 0 1.5rem;
+}
+
+.auth-email {
+	font-size: 0.85rem;
+	color: #6b7280;
+	background: #f3f4f6;
+	padding: 0.25rem 0.5rem;
+	border-radius: 4px;
+	display: inline-block;
+	margin: 0 0 1rem;
+}
+
+.sign-in-button {
+	padding: 0.65rem 1.5rem;
+	background-color: #4f46e5;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 1rem;
+	cursor: pointer;
+	transition: background-color 0.15s;
+}
+
+.sign-in-button:hover {
+	background-color: #4338ca;
+}
+
+.sign-out-button {
+	padding: 0.5rem 1.25rem;
+	background-color: #ef4444;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	font-size: 0.9rem;
+	cursor: pointer;
+	transition: background-color 0.15s;
+}
+
+.sign-out-button:hover {
+	background-color: #dc2626;
 }
