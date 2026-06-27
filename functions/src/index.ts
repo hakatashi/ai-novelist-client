@@ -51,6 +51,11 @@ export const generateCompletion = onCall(
 			const genAI = new GoogleGenerativeAI(geminiApiKey.value());
 			const geminiModel = genAI.getGenerativeModel({
 				model: 'gemini-3.1-flash-lite',
+				systemInstruction:
+					'あなたは小説の文章補完エンジンです。' +
+					'ユーザーが入力した小説の本文の続きを、同じ文体・語り口・視点で自然に書き続けてください。' +
+					'解説・感想・コメント・提案は一切出力しないでください。' +
+					'続きの本文のみを出力してください。',
 				generationConfig: {
 					temperature: params.temperature,
 					maxOutputTokens: params.maxTokens,
