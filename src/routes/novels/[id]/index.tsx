@@ -110,7 +110,6 @@ const Editor: Component = () => {
 	} = useEditor();
 
 	const [settingsOpen, setSettingsOpen] = createSignal(false);
-	let mainRef: HTMLElement | undefined;
 	const [colorTheme, setColorTheme] = createSignal<ColorTheme>(
 		loadPref<ColorTheme>('editor-theme', 'cream'),
 	);
@@ -222,12 +221,7 @@ const Editor: Component = () => {
 				</div>
 			</header>
 
-			<main
-				class={styles.main}
-				ref={(el) => {
-					mainRef = el;
-				}}
-			>
+			<main class={styles.main}>
 				<Doc
 					data={novelData}
 					fallback={<span class={styles.loading}>読み込み中...</span>}
@@ -238,10 +232,10 @@ const Editor: Component = () => {
 							value={body()}
 							onInput={onBodyInput}
 							placeholder="ここに物語を..."
-							ref={(_el) => {
+							ref={(el) => {
 								void document.fonts.ready.then(() => {
 									requestAnimationFrame(() => {
-										if (mainRef) mainRef.scrollTop = mainRef.scrollHeight;
+										el.scrollTop = el.scrollHeight;
 									});
 								});
 							}}
