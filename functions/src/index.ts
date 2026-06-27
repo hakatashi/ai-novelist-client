@@ -1,4 +1,4 @@
-import {GoogleGenerativeAI} from '@google/generative-ai';
+import {ApiError, GoogleGenAI} from '@google/genai';
 import {initializeApp} from 'firebase-admin/app';
 import {
 	type CollectionReference,
@@ -48,21 +48,34 @@ export const generateCompletion = onCall(
 		let text: string;
 
 		if (model === 'gemini') {
-			const genAI = new GoogleGenerativeAI(geminiApiKey.value());
-			const geminiModel = genAI.getGenerativeModel({
-				model: 'gemini-3.1-flash-lite',
-				systemInstruction:
-					'あなたは小説の文章補完エンジンです。' +
-					'ユーザーが入力した小説の本文の続きを、同じ文体・語り口・視点で自然に書き続けてください。' +
-					'解説・感想・コメント・提案は一切出力しないでください。' +
-					'続きの本文のみを出力してください。',
-				generationConfig: {
-					temperature: params.temperature,
-					maxOutputTokens: params.maxTokens,
-				},
-			});
-			const result = await geminiModel.generateContent(prompt);
-			text = result.response.text();
+			const ai = new GoogleGenAI({apiKey: geminiApiKey.value()});
+			try {
+				const interaction = await ai.interactions.create({
+					model: 'gemini-3.1-flash-lite',
+					input: prompt,
+					system_instruction:
+						'あなたは小説の文章補完エンジンです。' +
+						'ユーザーが入力した小説の本文の続きを、同じ文体・語り口・視点で自然に書き続けてください。' +
+						'解説・感想・コメント・提案は一切出力しないでください。' +
+						'続きの本文のみを出力してください。',
+					generation_config: {
+						temperature: params.temperature,
+						max_output_tokens: params.maxTokens,
+					},
+				});
+				text = interaction.output_text ?? '';
+			} catch (e) {
+				if (e instanceof ApiError && e.status === 400) {
+					throw new HttpsError(
+						'invalid-argument',
+						'入力内容がGoogleのポリシーに違反しているため、補完できませんでした。本文を修正してから再試行してください。',
+					);
+				}
+				throw new HttpsError(
+					'internal',
+					'生成中にエラーが発生しました。しばらく経ってから再試行してください。',
+				);
+			}
 		} else {
 			throw new HttpsError('invalid-argument', `Unsupported model: ${model}`);
 		}
