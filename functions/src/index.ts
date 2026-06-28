@@ -20,6 +20,8 @@ const db = getFirestore(app);
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 const ainovelApiKey = defineSecret('AINOBEL_API_KEY');
+const ollamaApiKey = defineSecret('OLLAMA_API_KEY');
+const ollamaHost = defineSecret('OLLAMA_HOST');
 
 const ALLOWED_EMAIL = 'hakatasiloving@gmail.com';
 
@@ -52,8 +54,13 @@ const aiNovelResponseSchema = z.object({
 
 const aiNovelErrorSchema = z.object({error: z.string()});
 
+const ollamaResponseSchema = z.object({
+	response: z.string(),
+	done: z.boolean(),
+});
+
 export const generateCompletion = onCall(
-	{secrets: [geminiApiKey, ainovelApiKey]},
+	{secrets: [geminiApiKey, ainovelApiKey, ollamaApiKey, ollamaHost]},
 	async (request) => {
 		if (!request.auth || request.auth.token.email !== ALLOWED_EMAIL) {
 			throw new HttpsError('permission-denied', 'Unauthorized');
@@ -170,6 +177,59 @@ export const generateCompletion = onCall(
 				);
 			}
 			text = parsed.data.data['0'] ?? '';
+		} else if (model === 'ollama') {
+			const host = ollamaHost.value() || 'http://localhost:11434';
+			const options: Record<string, unknown> = {
+				temperature: params.temperature,
+				num_predict: params.maxTokens,
+			};
+			if (params.topP !== undefined) options.top_p = params.topP;
+			if (params.topK !== undefined) options.top_k = params.topK;
+			if (params.seed !== null && params.seed !== undefined)
+				options.seed = params.seed;
+			if (params.ollamaMinP !== undefined) options.min_p = params.ollamaMinP;
+			if (params.ollamaTfsZ !== undefined) options.tfs_z = params.ollamaTfsZ;
+			if (params.ollamaTypicalP !== undefined)
+				options.typical_p = params.ollamaTypicalP;
+			if (params.ollamaRepeatPenalty !== undefined)
+				options.repeat_penalty = params.ollamaRepeatPenalty;
+			if (params.ollamaRepeatLastN !== undefined)
+				options.repeat_last_n = params.ollamaRepeatLastN;
+			if (params.ollamaPresencePenalty !== undefined)
+				options.presence_penalty = params.ollamaPresencePenalty;
+			if (params.ollamaFrequencyPenalty !== undefined)
+				options.frequency_penalty = params.ollamaFrequencyPenalty;
+			if (params.stopSequences?.length) options.stop = params.stopSequences;
+
+			const ollamaRes = await fetch(`${host}/api/generate`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${ollamaApiKey.value()}`,
+				},
+				body: JSON.stringify({
+					model: params.ollamaModel ?? 'llama3',
+					prompt,
+					stream: false,
+					raw: true,
+					options,
+				}),
+			});
+			if (!ollamaRes.ok) {
+				throw new HttpsError(
+					'internal',
+					`Ollama APIエラー: ${ollamaRes.status} ${ollamaRes.statusText}`,
+				);
+			}
+			const ollamaRaw: unknown = await ollamaRes.json();
+			const ollamaParsed = ollamaResponseSchema.safeParse(ollamaRaw);
+			if (!ollamaParsed.success) {
+				throw new HttpsError(
+					'internal',
+					`Ollama APIレスポンスの形式が不正です: ${ollamaParsed.error.message}`,
+				);
+			}
+			text = ollamaParsed.data.response;
 		} else {
 			throw new HttpsError('invalid-argument', `Unsupported model: ${model}`);
 		}
