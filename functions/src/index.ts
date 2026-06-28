@@ -8,6 +8,7 @@ import {
 import {info as loggerInfo} from 'firebase-functions/logger';
 import {defineSecret} from 'firebase-functions/params';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
+import {z} from 'zod';
 import type {Generation} from '../../src/lib/schema.ts';
 
 if (process.env.FUNCTIONS_EMULATOR === 'true') {
@@ -18,11 +19,41 @@ const app = initializeApp();
 const db = getFirestore(app);
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
+const ainovelApiKey = defineSecret('AINOBEL_API_KEY');
 
 const ALLOWED_EMAIL = 'hakatasiloving@gmail.com';
 
+const AINOVEL_API_URL = 'https://api.tringpt.com/api';
+
+const aiNovelResponseSchema = z.object({
+	data: z.object({
+		'0': z.string(),
+		choices: z.array(
+			z.object({
+				finish_reason: z.string(),
+				index: z.number(),
+				logprobs: z.null(),
+				prompt_logprobs: z.null(),
+				stop_reason: z.null(),
+				text: z.string(),
+			}),
+		),
+		created: z.number(),
+		id: z.string(),
+		model: z.string(),
+		object: z.string(),
+		usage: z.object({
+			completion_tokens: z.number(),
+			prompt_tokens: z.number(),
+			total_tokens: z.number(),
+		}),
+	}),
+});
+
+const aiNovelErrorSchema = z.object({error: z.string()});
+
 export const generateCompletion = onCall(
-	{secrets: [geminiApiKey]},
+	{secrets: [geminiApiKey, ainovelApiKey]},
 	async (request) => {
 		if (!request.auth || request.auth.token.email !== ALLOWED_EMAIL) {
 			throw new HttpsError('permission-denied', 'Unauthorized');
@@ -76,6 +107,42 @@ export const generateCompletion = onCall(
 					'生成中にエラーが発生しました。しばらく経ってから再試行してください。',
 				);
 			}
+		} else if (model === 'ainovel') {
+			const res = await fetch(AINOVEL_API_URL, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${ainovelApiKey.value()}`,
+				},
+				body: JSON.stringify({
+					text: prompt,
+					length: params.maxTokens,
+					model: 'derrida_03',
+					temperature: params.temperature,
+				}),
+			});
+			if (!res.ok) {
+				throw new HttpsError(
+					'internal',
+					`AIのべりすとAPIエラー: ${res.status} ${res.statusText}`,
+				);
+			}
+			const rawJson: unknown = await res.json();
+			const errorResult = aiNovelErrorSchema.safeParse(rawJson);
+			if (errorResult.success) {
+				throw new HttpsError(
+					'internal',
+					`AIのべりすとAPIエラー: ${errorResult.data.error}`,
+				);
+			}
+			const parsed = aiNovelResponseSchema.safeParse(rawJson);
+			if (!parsed.success) {
+				throw new HttpsError(
+					'internal',
+					`AIのべりすとAPIレスポンスの形式が不正です: ${parsed.error.message}`,
+				);
+			}
+			text = parsed.data.data['0'] ?? '';
 		} else {
 			throw new HttpsError('invalid-argument', `Unsupported model: ${model}`);
 		}

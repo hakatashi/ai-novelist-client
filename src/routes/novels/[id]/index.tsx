@@ -98,6 +98,8 @@ const Editor: Component = () => {
 		title,
 		body,
 		saveStatus,
+		model,
+		setModel,
 		temperature,
 		setTemperature,
 		maxTokens,
@@ -158,6 +160,25 @@ const Editor: Component = () => {
 					</button>
 					<Show when={settingsOpen()}>
 						<div class={styles.settingsDropdown}>
+							<div class={styles.settingGroup}>
+								<span class={styles.settingLabel}>モデル</span>
+								<div class={styles.toggleGroup}>
+									<button
+										type="button"
+										class={`${styles.toggleBtn} ${model() === 'gemini' ? styles.toggleBtnActive : ''}`}
+										onClick={() => setModel('gemini')}
+									>
+										Gemini
+									</button>
+									<button
+										type="button"
+										class={`${styles.toggleBtn} ${model() === 'ainovel' ? styles.toggleBtnActive : ''}`}
+										onClick={() => setModel('ainovel')}
+									>
+										AIのべりすと
+									</button>
+								</div>
+							</div>
 							<div class={styles.settingGroup}>
 								<span class={styles.settingLabel}>
 									Temperature: {temperature().toFixed(1)}
