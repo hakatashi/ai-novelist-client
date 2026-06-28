@@ -70,9 +70,20 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.9rem;
-	min-width: 240px;
+	width: 320px;
 	box-shadow: 0 4px 16px rgb(0 0 0 / 10%);
 	z-index: 10;
+	max-height: calc(100vh - 80px);
+	overflow-y: auto;
+}
+
+.sectionLabel {
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--muted);
+	margin: 0;
 }
 
 .settingGroup {
@@ -81,15 +92,41 @@
 	gap: 0.35rem;
 }
 
+.settingLabelRow {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
 .settingLabel {
 	font-size: 0.78rem;
 	color: var(--settings-text);
 	font-weight: 500;
 }
 
+.settingValue {
+	font-size: 0.78rem;
+	color: var(--accent);
+	font-variant-numeric: tabular-nums;
+	min-width: 3rem;
+	text-align: right;
+}
+
 .range {
 	width: 100%;
 	accent-color: var(--range-accent);
+}
+
+.tokenTicks {
+	display: flex;
+	justify-content: space-between;
+	padding: 0 0.1rem;
+	margin-top: 0.05rem;
+}
+
+.tokenTicks span {
+	font-size: 0.62rem;
+	color: var(--muted);
 }
 
 .numberInput {
@@ -102,9 +139,52 @@
 	width: 100%;
 }
 
+.selectInput {
+	padding: 0.3rem 0.5rem;
+	border: 1px solid var(--settings-border);
+	border-radius: 4px;
+	font-size: 0.82rem;
+	background: var(--settings-bg);
+	color: var(--settings-text);
+	width: 100%;
+	cursor: pointer;
+}
+
+.textareaInput {
+	padding: 0.35rem 0.5rem;
+	border: 1px solid var(--settings-border);
+	border-radius: 4px;
+	font-size: 0.82rem;
+	background: var(--settings-bg);
+	color: var(--settings-text);
+	width: 100%;
+	resize: vertical;
+	font-family: monospace;
+	line-height: 1.4;
+}
+
+.checkboxLabel {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	font-size: 0.78rem;
+	color: var(--settings-text);
+	cursor: pointer;
+	font-weight: 500;
+}
+
+.checkbox {
+	width: 1rem;
+	height: 1rem;
+	accent-color: var(--accent);
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
 .toggleGroup {
 	display: flex;
 	gap: 0.3rem;
+	flex-wrap: wrap;
 }
 
 .toggleBtn {
@@ -131,6 +211,50 @@
 	background: var(--accent);
 	color: var(--toggle-active-text);
 	border-color: var(--accent);
+}
+
+.advancedSection {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+}
+
+.advancedToggle {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	background: none;
+	border: 1px solid var(--settings-border);
+	border-radius: 4px;
+	padding: 0.35rem 0.6rem;
+	font-size: 0.78rem;
+	color: var(--settings-text);
+	cursor: pointer;
+	font-weight: 500;
+	transition: background 0.15s;
+}
+
+.advancedToggle:hover {
+	background: var(--gear-hover);
+}
+
+.advancedArrow {
+	font-size: 0.65rem;
+	color: var(--muted);
+}
+
+.advancedContent {
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+	padding: 0.75rem 0 0.1rem;
+}
+
+.divider {
+	border: none;
+	border-top: 1px solid var(--settings-border);
+	margin: 0;
 }
 
 .main {

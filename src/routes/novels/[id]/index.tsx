@@ -1,6 +1,10 @@
 import {For, Show, type Component, createSignal} from 'solid-js';
 import {isServer} from 'solid-js/web';
 import Doc from '~/lib/Doc';
+import type {
+	AiNovelAdvancedSettings,
+	GeminiAdvancedSettings,
+} from '~/lib/useEditor';
 import {useEditor} from '~/lib/useEditor';
 import styles from './index.module.css';
 
@@ -82,6 +86,27 @@ const FONT_LABELS: Record<FontKey, string> = {
 	ryumin: 'リュウミン',
 };
 
+const TOKEN_STEPS = [64, 128, 256, 512, 1024, 2048] as const;
+type TokenStep = (typeof TOKEN_STEPS)[number];
+
+const GEMINI_MODELS = [
+	{value: 'gemini-2.0-flash-lite', label: 'Gemini 2.0 Flash Lite'},
+	{value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash'},
+	{value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash'},
+	{value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash'},
+] as const;
+
+const AINOVEL_MODELS = [
+	{value: 'derrida_03', label: 'Derrida 03 (文学的)'},
+	{value: 'damsel_ray', label: 'Damsel Ray (一般向け)'},
+	{value: 'spiko', label: 'Spiko (汎用)'},
+	{value: 'spiko_solid', label: 'Spiko Solid (安定)'},
+	{value: 'spiko_max', label: 'Spiko Max (高性能)'},
+	{value: 'spiko_ultra', label: 'Spiko Ultra (超高性能)'},
+	{value: 'supertrin_highpres', label: 'SuperTrin HighPres'},
+	{value: 'supertrin_maxpres', label: 'SuperTrin MaxPres'},
+] as const;
+
 function loadPref<T extends string>(key: string, fallback: T): T {
 	if (isServer) return fallback;
 	return (localStorage.getItem(key) as T) ?? fallback;
@@ -90,6 +115,35 @@ function loadPref<T extends string>(key: string, fallback: T): T {
 function savePref(key: string, value: string): void {
 	if (isServer) return;
 	localStorage.setItem(key, value);
+}
+
+function SliderRow(props: {
+	label: string;
+	value: number;
+	min: number;
+	max: number;
+	step: number;
+	format?: (v: number) => string;
+	onInput: (v: number) => void;
+}) {
+	const fmt = props.format ?? ((v: number) => v.toFixed(2));
+	return (
+		<div class={styles.settingGroup}>
+			<div class={styles.settingLabelRow}>
+				<span class={styles.settingLabel}>{props.label}</span>
+				<span class={styles.settingValue}>{fmt(props.value)}</span>
+			</div>
+			<input
+				type="range"
+				min={props.min}
+				max={props.max}
+				step={props.step}
+				value={props.value}
+				onInput={(e) => props.onInput(Number(e.currentTarget.value))}
+				class={styles.range}
+			/>
+		</div>
+	);
 }
 
 const Editor: Component = () => {
@@ -104,6 +158,10 @@ const Editor: Component = () => {
 		setTemperature,
 		maxTokens,
 		setMaxTokens,
+		geminiAdvanced,
+		setGeminiAdvanced,
+		ainovelAdvanced,
+		setAinovelAdvanced,
 		isGenerating,
 		generateError,
 		onTitleInput,
@@ -112,6 +170,7 @@ const Editor: Component = () => {
 	} = useEditor();
 
 	const [settingsOpen, setSettingsOpen] = createSignal(false);
+	const [advancedOpen, setAdvancedOpen] = createSignal(false);
 	const [colorTheme, setColorTheme] = createSignal<ColorTheme>(
 		loadPref<ColorTheme>('editor-theme', 'cream'),
 	);
@@ -127,6 +186,16 @@ const Editor: Component = () => {
 	const updateFont = (f: FontKey) => {
 		setFontFamily(f);
 		savePref('editor-font', f);
+	};
+
+	const maxTokensIdx = () => TOKEN_STEPS.indexOf(maxTokens() as TokenStep);
+
+	const patchGemini = (patch: Partial<GeminiAdvancedSettings>) => {
+		setGeminiAdvanced((prev) => ({...prev, ...patch}));
+	};
+
+	const patchAinovel = (patch: Partial<AiNovelAdvancedSettings>) => {
+		setAinovelAdvanced((prev) => ({...prev, ...patch}));
 	};
 
 	return (
@@ -160,6 +229,9 @@ const Editor: Component = () => {
 					</button>
 					<Show when={settingsOpen()}>
 						<div class={styles.settingsDropdown}>
+							{/* ── AI 生成設定 ── */}
+							<p class={styles.sectionLabel}>AI 生成</p>
+
 							<div class={styles.settingGroup}>
 								<span class={styles.settingLabel}>モデル</span>
 								<div class={styles.toggleGroup}>
@@ -179,32 +251,299 @@ const Editor: Component = () => {
 									</button>
 								</div>
 							</div>
+
+							<SliderRow
+								label="Temperature"
+								value={temperature()}
+								min={0}
+								max={model() === 'ainovel' ? 2.5 : 2}
+								step={0.05}
+								onInput={setTemperature}
+							/>
+
 							<div class={styles.settingGroup}>
-								<span class={styles.settingLabel}>
-									Temperature: {temperature().toFixed(1)}
-								</span>
+								<div class={styles.settingLabelRow}>
+									<span class={styles.settingLabel}>最大トークン数</span>
+									<span class={styles.settingValue}>{maxTokens()}</span>
+								</div>
 								<input
 									type="range"
-									min="0"
-									max="2"
-									step="0.1"
-									value={temperature()}
-									onInput={(e) => setTemperature(Number(e.currentTarget.value))}
+									min={0}
+									max={TOKEN_STEPS.length - 1}
+									step={1}
+									value={maxTokensIdx()}
+									onInput={(e) =>
+										setMaxTokens(TOKEN_STEPS[Number(e.currentTarget.value)]!)
+									}
 									class={styles.range}
 								/>
+								<div class={styles.tokenTicks}>
+									<For each={[...TOKEN_STEPS]}>{(v) => <span>{v}</span>}</For>
+								</div>
 							</div>
-							<div class={styles.settingGroup}>
-								<span class={styles.settingLabel}>最大トークン数</span>
-								<input
-									type="number"
-									min="64"
-									max="2048"
-									step="64"
-									value={maxTokens()}
-									onInput={(e) => setMaxTokens(Number(e.currentTarget.value))}
-									class={styles.numberInput}
-								/>
+
+							{/* ── 詳細設定 (折りたたみ) ── */}
+							<div class={styles.advancedSection}>
+								<button
+									type="button"
+									class={styles.advancedToggle}
+									onClick={() => setAdvancedOpen(!advancedOpen())}
+								>
+									詳細設定
+									<span class={styles.advancedArrow}>
+										{advancedOpen() ? '▲' : '▼'}
+									</span>
+								</button>
+								<Show when={advancedOpen()}>
+									<div class={styles.advancedContent}>
+										<Show when={model() === 'gemini'}>
+											<div class={styles.settingGroup}>
+												<span class={styles.settingLabel}>Gemini モデル</span>
+												<select
+													class={styles.selectInput}
+													value={geminiAdvanced().geminiModel}
+													onChange={(e) =>
+														patchGemini({geminiModel: e.currentTarget.value})
+													}
+												>
+													<For each={[...GEMINI_MODELS]}>
+														{(m) => <option value={m.value}>{m.label}</option>}
+													</For>
+												</select>
+											</div>
+
+											<SliderRow
+												label="Top P"
+												value={geminiAdvanced().topP}
+												min={0}
+												max={1}
+												step={0.01}
+												onInput={(v) => patchGemini({topP: v})}
+											/>
+
+											<SliderRow
+												label="Top K"
+												value={geminiAdvanced().topK}
+												min={1}
+												max={100}
+												step={1}
+												format={(v) => String(Math.round(v))}
+												onInput={(v) => patchGemini({topK: v})}
+											/>
+
+											<SliderRow
+												label="Frequency Penalty"
+												value={geminiAdvanced().frequencyPenalty}
+												min={0}
+												max={2}
+												step={0.05}
+												onInput={(v) => patchGemini({frequencyPenalty: v})}
+											/>
+
+											<SliderRow
+												label="Presence Penalty"
+												value={geminiAdvanced().presencePenalty}
+												min={0}
+												max={2}
+												step={0.05}
+												onInput={(v) => patchGemini({presencePenalty: v})}
+											/>
+
+											<div class={styles.settingGroup}>
+												<span class={styles.settingLabel}>
+													シード (空欄 = ランダム)
+												</span>
+												<input
+													type="number"
+													class={styles.numberInput}
+													value={
+														geminiAdvanced().seed !== null
+															? (geminiAdvanced().seed ?? '')
+															: ''
+													}
+													placeholder="ランダム"
+													min={0}
+													onInput={(e) => {
+														const val = e.currentTarget.value;
+														patchGemini({
+															seed: val === '' ? null : Number(val),
+														});
+													}}
+												/>
+											</div>
+
+											<div class={styles.settingGroup}>
+												<span class={styles.settingLabel}>
+													停止シーケンス (1 行 1 つ)
+												</span>
+												<textarea
+													class={styles.textareaInput}
+													value={geminiAdvanced().stopSequences.join('\n')}
+													rows={3}
+													placeholder={'例：\n「\n」'}
+													onInput={(e) =>
+														patchGemini({
+															stopSequences: e.currentTarget.value
+																.split('\n')
+																.map((s) => s.trim())
+																.filter((s) => s.length > 0),
+														})
+													}
+												/>
+											</div>
+										</Show>
+
+										<Show when={model() === 'ainovel'}>
+											<div class={styles.settingGroup}>
+												<span class={styles.settingLabel}>
+													AIのべりすと モデル
+												</span>
+												<select
+													class={styles.selectInput}
+													value={ainovelAdvanced().ainovelModel}
+													onChange={(e) =>
+														patchAinovel({ainovelModel: e.currentTarget.value})
+													}
+												>
+													<For each={[...AINOVEL_MODELS]}>
+														{(m) => <option value={m.value}>{m.label}</option>}
+													</For>
+												</select>
+											</div>
+
+											<SliderRow
+												label="Top P"
+												value={ainovelAdvanced().topP}
+												min={0.01}
+												max={1}
+												step={0.01}
+												onInput={(v) => patchAinovel({topP: v})}
+											/>
+
+											<SliderRow
+												label="Top K"
+												value={ainovelAdvanced().topK}
+												min={1}
+												max={500}
+												step={1}
+												format={(v) => String(Math.round(v))}
+												onInput={(v) => patchAinovel({topK: v})}
+											/>
+
+											<SliderRow
+												label="Top A"
+												value={ainovelAdvanced().topA}
+												min={0}
+												max={1}
+												step={0.01}
+												onInput={(v) => patchAinovel({topA: v})}
+											/>
+
+											<SliderRow
+												label="Min P"
+												value={ainovelAdvanced().minP}
+												min={0}
+												max={1}
+												step={0.01}
+												onInput={(v) => patchAinovel({minP: v})}
+											/>
+
+											<SliderRow
+												label="Typical P"
+												value={ainovelAdvanced().typicalP}
+												min={0.01}
+												max={1}
+												step={0.01}
+												onInput={(v) => patchAinovel({typicalP: v})}
+											/>
+
+											<SliderRow
+												label="Tail Free Sampling"
+												value={ainovelAdvanced().tailfree}
+												min={0.01}
+												max={1}
+												step={0.01}
+												onInput={(v) => patchAinovel({tailfree: v})}
+											/>
+
+											<SliderRow
+												label="繰り返しペナルティ"
+												value={ainovelAdvanced().repPen}
+												min={1}
+												max={2}
+												step={0.01}
+												onInput={(v) => patchAinovel({repPen: v})}
+											/>
+
+											<SliderRow
+												label="ペナルティ適用範囲"
+												value={ainovelAdvanced().repPenRange}
+												min={0}
+												max={2048}
+												step={64}
+												format={(v) => String(Math.round(v))}
+												onInput={(v) => patchAinovel({repPenRange: v})}
+											/>
+
+											<SliderRow
+												label="ペナルティ傾き"
+												value={ainovelAdvanced().repPenSlope}
+												min={0.01}
+												max={10}
+												step={0.05}
+												onInput={(v) => patchAinovel({repPenSlope: v})}
+											/>
+
+											<SliderRow
+												label="文脈依存ペナルティ"
+												value={ainovelAdvanced().repPenPres}
+												min={0}
+												max={100}
+												step={1}
+												format={(v) => String(Math.round(v))}
+												onInput={(v) => patchAinovel({repPenPres: v})}
+											/>
+
+											<div class={styles.settingGroup}>
+												<span class={styles.settingLabel}>
+													停止トークン (「{'<<|>>'}」区切り)
+												</span>
+												<textarea
+													class={styles.textareaInput}
+													value={ainovelAdvanced().stopTokens}
+													rows={2}
+													placeholder={'例：。<<|>>！'}
+													onInput={(e) =>
+														patchAinovel({stopTokens: e.currentTarget.value})
+													}
+												/>
+											</div>
+
+											<div class={styles.settingGroup}>
+												<label class={styles.checkboxLabel}>
+													<input
+														type="checkbox"
+														class={styles.checkbox}
+														checked={ainovelAdvanced().multilingualMode}
+														onChange={(e) =>
+															patchAinovel({
+																multilingualMode: e.currentTarget.checked,
+															})
+														}
+													/>
+													多言語モード
+												</label>
+											</div>
+										</Show>
+									</div>
+								</Show>
 							</div>
+
+							<hr class={styles.divider} />
+
+							{/* ── エディタ設定 ── */}
+							<p class={styles.sectionLabel}>エディタ</p>
+
 							<div class={styles.settingGroup}>
 								<span class={styles.settingLabel}>カラーテーマ</span>
 								<div class={styles.toggleGroup}>
@@ -221,6 +560,7 @@ const Editor: Component = () => {
 									</For>
 								</div>
 							</div>
+
 							<div class={styles.settingGroup}>
 								<span class={styles.settingLabel}>フォント</span>
 								<div class={styles.toggleGroup}>

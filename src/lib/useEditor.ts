@@ -5,13 +5,67 @@ import {useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, onCleanup} from 'solid-js';
 import {isServer} from 'solid-js/web';
 import {db, functions, Novels} from '~/lib/firebase';
-import type {Novel} from '~/lib/schema.ts';
+import type {GenerationParams, Novel} from '~/lib/schema.ts';
+
+export interface GeminiAdvancedSettings {
+	geminiModel: string;
+	topP: number;
+	topK: number;
+	frequencyPenalty: number;
+	presencePenalty: number;
+	seed: number | null;
+	stopSequences: string[];
+}
+
+export interface AiNovelAdvancedSettings {
+	ainovelModel: string;
+	topP: number;
+	topK: number;
+	topA: number;
+	minP: number;
+	typicalP: number;
+	tailfree: number;
+	repPen: number;
+	repPenRange: number;
+	repPenSlope: number;
+	repPenPres: number;
+	stopTokens: string;
+	multilingualMode: boolean;
+}
 
 interface NovelSettings {
 	model: 'gemini' | 'ainovel';
 	temperature: number;
 	maxTokens: number;
+	geminiAdvanced: GeminiAdvancedSettings;
+	ainovelAdvanced: AiNovelAdvancedSettings;
 }
+
+const DEFAULT_GEMINI_ADVANCED: GeminiAdvancedSettings = {
+	geminiModel: 'gemini-2.0-flash-lite',
+	topP: 0.95,
+	topK: 40,
+	frequencyPenalty: 0,
+	presencePenalty: 0,
+	seed: null,
+	stopSequences: [],
+};
+
+const DEFAULT_AINOVEL_ADVANCED: AiNovelAdvancedSettings = {
+	ainovelModel: 'derrida_03',
+	topP: 0.9,
+	topK: 40,
+	topA: 0,
+	minP: 0,
+	typicalP: 1.0,
+	tailfree: 1.0,
+	repPen: 1.1,
+	repPenRange: 512,
+	repPenSlope: 0.7,
+	repPenPres: 0,
+	stopTokens: '',
+	multilingualMode: false,
+};
 
 function loadNovelSettings(novelId: string): Partial<NovelSettings> {
 	if (isServer) return {};
@@ -32,7 +86,7 @@ interface GenerateRequest {
 	novelId: string;
 	model: string;
 	prompt: string;
-	params: {temperature: number; maxTokens: number};
+	params: GenerationParams;
 }
 
 interface GenerateResponse {
@@ -55,6 +109,7 @@ export function useEditor() {
 	const [saveStatus, setSaveStatus] = createSignal<
 		'saved' | 'saving' | 'unsaved'
 	>('saved');
+
 	const savedSettings = loadNovelSettings(params.id);
 	const [model, setModel] = createSignal<'gemini' | 'ainovel'>(
 		savedSettings.model ?? 'gemini',
@@ -65,6 +120,17 @@ export function useEditor() {
 	const [maxTokens, setMaxTokens] = createSignal(
 		savedSettings.maxTokens ?? 256,
 	);
+	const [geminiAdvanced, setGeminiAdvanced] =
+		createSignal<GeminiAdvancedSettings>({
+			...DEFAULT_GEMINI_ADVANCED,
+			...(savedSettings.geminiAdvanced ?? {}),
+		});
+	const [ainovelAdvanced, setAinovelAdvanced] =
+		createSignal<AiNovelAdvancedSettings>({
+			...DEFAULT_AINOVEL_ADVANCED,
+			...(savedSettings.ainovelAdvanced ?? {}),
+		});
+
 	const [isGenerating, setIsGenerating] = createSignal(false);
 	const [generateError, setGenerateError] = createSignal('');
 
@@ -73,6 +139,8 @@ export function useEditor() {
 			model: model(),
 			temperature: temperature(),
 			maxTokens: maxTokens(),
+			geminiAdvanced: geminiAdvanced(),
+			ainovelAdvanced: ainovelAdvanced(),
 		});
 	});
 
@@ -133,11 +201,44 @@ export function useEditor() {
 		setIsGenerating(true);
 		setGenerateError('');
 		try {
+			const gAdv = geminiAdvanced();
+			const aAdv = ainovelAdvanced();
+			const genParams: GenerationParams =
+				model() === 'gemini'
+					? {
+							temperature: temperature(),
+							maxTokens: maxTokens(),
+							geminiModel: gAdv.geminiModel,
+							topP: gAdv.topP,
+							topK: gAdv.topK,
+							frequencyPenalty: gAdv.frequencyPenalty,
+							presencePenalty: gAdv.presencePenalty,
+							seed: gAdv.seed,
+							stopSequences: gAdv.stopSequences,
+						}
+					: {
+							temperature: temperature(),
+							maxTokens: maxTokens(),
+							ainovelModel: aAdv.ainovelModel,
+							topP: aAdv.topP,
+							topK: aAdv.topK,
+							topA: aAdv.topA,
+							minP: aAdv.minP,
+							typicalP: aAdv.typicalP,
+							tailfree: aAdv.tailfree,
+							repPen: aAdv.repPen,
+							repPenRange: aAdv.repPenRange,
+							repPenSlope: aAdv.repPenSlope,
+							repPenPres: aAdv.repPenPres,
+							stopTokens: aAdv.stopTokens,
+							multilingualMode: aAdv.multilingualMode,
+						};
+
 			const result = await generateCompletion({
 				novelId: params.id,
 				model: model(),
 				prompt: body(),
-				params: {temperature: temperature(), maxTokens: maxTokens()},
+				params: genParams,
 			});
 			const newBody = body() + result.data.text;
 			setBody(newBody);
@@ -160,6 +261,10 @@ export function useEditor() {
 		setTemperature,
 		maxTokens,
 		setMaxTokens,
+		geminiAdvanced,
+		setGeminiAdvanced,
+		ainovelAdvanced,
+		setAinovelAdvanced,
 		isGenerating,
 		generateError,
 		onTitleInput,
