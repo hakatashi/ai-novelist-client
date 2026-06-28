@@ -3,8 +3,30 @@ import {doc, Timestamp, updateDoc} from 'firebase/firestore';
 import {httpsCallable} from 'firebase/functions';
 import {useFirestore} from 'solid-firebase';
 import {createEffect, createSignal, onCleanup} from 'solid-js';
+import {isServer} from 'solid-js/web';
 import {db, functions, Novels} from '~/lib/firebase';
 import type {Novel} from '~/lib/schema.ts';
+
+interface NovelSettings {
+	model: 'gemini' | 'ainovel';
+	temperature: number;
+	maxTokens: number;
+}
+
+function loadNovelSettings(novelId: string): Partial<NovelSettings> {
+	if (isServer) return {};
+	try {
+		const raw = localStorage.getItem(`novel-settings-${novelId}`);
+		return raw ? (JSON.parse(raw) as Partial<NovelSettings>) : {};
+	} catch {
+		return {};
+	}
+}
+
+function saveNovelSettings(novelId: string, settings: NovelSettings): void {
+	if (isServer) return;
+	localStorage.setItem(`novel-settings-${novelId}`, JSON.stringify(settings));
+}
 
 interface GenerateRequest {
 	novelId: string;
@@ -33,11 +55,26 @@ export function useEditor() {
 	const [saveStatus, setSaveStatus] = createSignal<
 		'saved' | 'saving' | 'unsaved'
 	>('saved');
-	const [model, setModel] = createSignal<'gemini' | 'ainovel'>('gemini');
-	const [temperature, setTemperature] = createSignal(1.0);
-	const [maxTokens, setMaxTokens] = createSignal(256);
+	const savedSettings = loadNovelSettings(params.id);
+	const [model, setModel] = createSignal<'gemini' | 'ainovel'>(
+		savedSettings.model ?? 'gemini',
+	);
+	const [temperature, setTemperature] = createSignal(
+		savedSettings.temperature ?? 1.0,
+	);
+	const [maxTokens, setMaxTokens] = createSignal(
+		savedSettings.maxTokens ?? 256,
+	);
 	const [isGenerating, setIsGenerating] = createSignal(false);
 	const [generateError, setGenerateError] = createSignal('');
+
+	createEffect(() => {
+		saveNovelSettings(params.id, {
+			model: model(),
+			temperature: temperature(),
+			maxTokens: maxTokens(),
+		});
+	});
 
 	let titleInitialized = false;
 	let bodyInitialized = false;
