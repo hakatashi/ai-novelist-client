@@ -15,14 +15,36 @@ export interface Novel extends DocumentData {
 	updatedAt: Timestamp;
 }
 
+export interface GenerationParams {
+	temperature: number;
+	maxTokens: number;
+	// Gemini-specific
+	geminiModel?: string;
+	topP?: number;
+	topK?: number;
+	frequencyPenalty?: number;
+	presencePenalty?: number;
+	seed?: number | null;
+	stopSequences?: string[];
+	// AIのべりすと-specific
+	ainovelModel?: string;
+	topA?: number;
+	minP?: number;
+	typicalP?: number;
+	tailfree?: number;
+	repPen?: number;
+	repPenRange?: number;
+	repPenSlope?: number;
+	repPenPres?: number;
+	stopTokens?: string;
+	multilingualMode?: boolean;
+}
+
 export interface Generation extends DocumentData {
 	prompt: string;
 	response: string;
 	model: 'gemini' | 'ollama' | 'ainovel';
-	params: {
-		temperature: number;
-		maxTokens: number;
-	};
+	params: GenerationParams;
 	createdAt: Timestamp;
 	durationMs: number;
 }

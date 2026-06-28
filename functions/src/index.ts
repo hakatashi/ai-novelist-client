@@ -9,7 +9,7 @@ import {info as loggerInfo} from 'firebase-functions/logger';
 import {defineSecret} from 'firebase-functions/params';
 import {HttpsError, onCall} from 'firebase-functions/v2/https';
 import {z} from 'zod';
-import type {Generation} from '../../src/lib/schema.ts';
+import type {Generation, GenerationParams} from '../../src/lib/schema.ts';
 
 if (process.env.FUNCTIONS_EMULATOR === 'true') {
 	process.env.FIRESTORE_EMULATOR_HOST = 'localhost:9935';
@@ -63,7 +63,7 @@ export const generateCompletion = onCall(
 			novelId: string;
 			model: string;
 			prompt: string;
-			params: {temperature: number; maxTokens: number};
+			params: GenerationParams;
 		};
 
 		if (!novelId || !prompt) {
@@ -81,20 +81,29 @@ export const generateCompletion = onCall(
 		if (model === 'gemini') {
 			const ai = new GoogleGenAI({apiKey: geminiApiKey.value()});
 			try {
-				const interaction = await ai.interactions.create({
-					model: 'gemini-3.1-flash-lite',
-					input: prompt,
-					system_instruction:
-						'あなたは小説の文章補完エンジンです。' +
-						'ユーザーが入力した小説の本文の続きを、同じ文体・語り口・視点で自然に書き続けてください。' +
-						'解説・感想・コメント・提案は一切出力しないでください。' +
-						'続きの本文のみを出力してください。',
-					generation_config: {
+				const response = await ai.models.generateContent({
+					model: params.geminiModel ?? 'gemini-3.1-flash-lite',
+					contents: prompt,
+					config: {
+						systemInstruction:
+							'あなたは小説の文章補完エンジンです。' +
+							'ユーザーが入力した小説の本文の続きを、同じ文体・語り口・視点で自然に書き続けてください。' +
+							'解説・感想・コメント・提案は一切出力しないでください。' +
+							'続きの本文のみを出力してください。',
 						temperature: params.temperature,
-						max_output_tokens: params.maxTokens,
+						maxOutputTokens: params.maxTokens,
+						topP: params.topP,
+						topK: params.topK,
+						frequencyPenalty: params.frequencyPenalty,
+						presencePenalty: params.presencePenalty,
+						...(params.seed !== null &&
+							params.seed !== undefined && {seed: params.seed}),
+						...(params.stopSequences?.length && {
+							stopSequences: params.stopSequences,
+						}),
 					},
 				});
-				text = interaction.output_text ?? '';
+				text = response.text ?? '';
 			} catch (e) {
 				if (e instanceof ApiError && e.status === 400) {
 					throw new HttpsError(
@@ -108,18 +117,36 @@ export const generateCompletion = onCall(
 				);
 			}
 		} else if (model === 'ainovel') {
+			const body: Record<string, unknown> = {
+				text: prompt,
+				length: params.maxTokens,
+				model: params.ainovelModel ?? 'derrida_03',
+				temperature: params.temperature,
+				top_p: params.topP,
+				top_k: params.topK,
+			};
+			if (params.topA !== undefined) body.top_a = params.topA;
+			if (params.minP !== undefined) body.min_p = params.minP;
+			if (params.typicalP !== undefined) body.typical_p = params.typicalP;
+			if (params.tailfree !== undefined) body.tailfree = params.tailfree;
+			if (params.repPen !== undefined) body.rep_pen = params.repPen;
+			if (params.repPenRange !== undefined)
+				body.rep_pen_range = params.repPenRange;
+			if (params.repPenSlope !== undefined)
+				body.rep_pen_slope = params.repPenSlope;
+			if (params.repPenPres !== undefined)
+				body.rep_pen_pres = params.repPenPres;
+			if (params.stopTokens) body.stoptokens = params.stopTokens;
+			if (params.multilingualMode !== undefined)
+				body.multilingual_mode = params.multilingualMode;
+
 			const res = await fetch(AINOVEL_API_URL, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${ainovelApiKey.value()}`,
 				},
-				body: JSON.stringify({
-					text: prompt,
-					length: params.maxTokens,
-					model: 'derrida_03',
-					temperature: params.temperature,
-				}),
+				body: JSON.stringify(body),
 			});
 			if (!res.ok) {
 				throw new HttpsError(
