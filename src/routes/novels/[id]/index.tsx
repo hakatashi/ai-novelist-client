@@ -86,7 +86,7 @@ const FONT_LABELS: Record<FontKey, string> = {
 	ryumin: 'リュウミン',
 };
 
-const TOKEN_STEPS = [64, 128, 256, 512, 1024, 2048] as const;
+const TOKEN_STEPS = [16, 32, 64, 128, 256, 512, 1024] as const;
 type TokenStep = (typeof TOKEN_STEPS)[number];
 
 const GEMINI_MODELS = [
