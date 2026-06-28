@@ -90,9 +90,10 @@ const TOKEN_STEPS = [64, 128, 256, 512, 1024, 2048] as const;
 type TokenStep = (typeof TOKEN_STEPS)[number];
 
 const GEMINI_MODELS = [
-	{value: 'gemini-2.0-flash-lite', label: 'Gemini 2.0 Flash Lite'},
-	{value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash'},
+	{value: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash Lite'},
 	{value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash'},
+	{value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash'},
+	{value: 'gemini-2.0-flash-lite', label: 'Gemini 2.0 Flash Lite'},
 	{value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash'},
 ] as const;
 

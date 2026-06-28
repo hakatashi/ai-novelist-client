@@ -42,7 +42,7 @@ interface NovelSettings {
 }
 
 const DEFAULT_GEMINI_ADVANCED: GeminiAdvancedSettings = {
-	geminiModel: 'gemini-2.0-flash-lite',
+	geminiModel: 'gemini-3.1-flash-lite',
 	topP: 0.95,
 	topK: 40,
 	frequencyPenalty: 0,

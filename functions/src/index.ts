@@ -82,7 +82,7 @@ export const generateCompletion = onCall(
 			const ai = new GoogleGenAI({apiKey: geminiApiKey.value()});
 			try {
 				const response = await ai.models.generateContent({
-					model: params.geminiModel ?? 'gemini-2.0-flash-lite',
+					model: params.geminiModel ?? 'gemini-3.1-flash-lite',
 					contents: prompt,
 					config: {
 						systemInstruction:
