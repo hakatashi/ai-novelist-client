@@ -33,6 +33,7 @@ export function useEditor() {
 	const [saveStatus, setSaveStatus] = createSignal<
 		'saved' | 'saving' | 'unsaved'
 	>('saved');
+	const [model, setModel] = createSignal<'gemini' | 'ainovel'>('gemini');
 	const [temperature, setTemperature] = createSignal(1.0);
 	const [maxTokens, setMaxTokens] = createSignal(256);
 	const [isGenerating, setIsGenerating] = createSignal(false);
@@ -97,7 +98,7 @@ export function useEditor() {
 		try {
 			const result = await generateCompletion({
 				novelId: params.id,
-				model: 'gemini',
+				model: model(),
 				prompt: body(),
 				params: {temperature: temperature(), maxTokens: maxTokens()},
 			});
@@ -116,6 +117,8 @@ export function useEditor() {
 		title,
 		body,
 		saveStatus,
+		model,
+		setModel,
 		temperature,
 		setTemperature,
 		maxTokens,
