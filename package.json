@@ -24,7 +24,7 @@
 		"concurrently": "^10.0.3",
 		"firebase": "^12.15.0",
 		"solid-firebase": "^0.3.0",
-		"solid-js": "^1.9.13",
+		"solid-js": "^1.9.14",
 		"vinxi": "^0.5.11",
 		"vite-plugin-solid": "^2.11.12"
 	},
