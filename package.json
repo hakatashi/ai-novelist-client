@@ -34,7 +34,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.5.5",
 		"@solidjs/testing-library": "^0.8.10",
-		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/jest-dom": "^7.0.0",
 		"@testing-library/user-event": "^14.6.1",
 		"husky": "^9.1.7",
 		"jsdom": "^29.1.1",
