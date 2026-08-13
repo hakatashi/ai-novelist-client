@@ -4,6 +4,7 @@ import Doc from '~/lib/Doc';
 import type {
 	AiNovelAdvancedSettings,
 	GeminiAdvancedSettings,
+	OllamaAdvancedSettings,
 } from '~/lib/useEditor';
 import {useEditor} from '~/lib/useEditor';
 import styles from './index.module.css';
@@ -163,6 +164,8 @@ const Editor: Component = () => {
 		setGeminiAdvanced,
 		ainovelAdvanced,
 		setAinovelAdvanced,
+		ollamaAdvanced,
+		setOllamaAdvanced,
 		isGenerating,
 		generateError,
 		onTitleInput,
@@ -197,6 +200,10 @@ const Editor: Component = () => {
 
 	const patchAinovel = (patch: Partial<AiNovelAdvancedSettings>) => {
 		setAinovelAdvanced((prev) => ({...prev, ...patch}));
+	};
+
+	const patchOllama = (patch: Partial<OllamaAdvancedSettings>) => {
+		setOllamaAdvanced((prev) => ({...prev, ...patch}));
 	};
 
 	return (
@@ -249,6 +256,13 @@ const Editor: Component = () => {
 										onClick={() => setModel('ainovel')}
 									>
 										AIのべりすと
+									</button>
+									<button
+										type="button"
+										class={`${styles.toggleBtn} ${model() === 'ollama' ? styles.toggleBtnActive : ''}`}
+										onClick={() => setModel('ollama')}
+									>
+										Ollama
 									</button>
 								</div>
 							</div>
@@ -534,6 +548,149 @@ const Editor: Component = () => {
 													/>
 													多言語モード
 												</label>
+											</div>
+										</Show>
+
+										<Show when={model() === 'ollama'}>
+											<div class={styles.settingGroup}>
+												<span class={styles.settingLabel}>Ollama モデル名</span>
+												<input
+													type="text"
+													class={styles.numberInput}
+													value={ollamaAdvanced().ollamaModel}
+													placeholder="llama3"
+													onInput={(e) =>
+														patchOllama({ollamaModel: e.currentTarget.value})
+													}
+												/>
+											</div>
+
+											<SliderRow
+												label="Top P"
+												value={ollamaAdvanced().topP}
+												min={0}
+												max={1}
+												step={0.01}
+												onInput={(v) => patchOllama({topP: v})}
+											/>
+
+											<SliderRow
+												label="Top K"
+												value={ollamaAdvanced().topK}
+												min={1}
+												max={100}
+												step={1}
+												format={(v) => String(Math.round(v))}
+												onInput={(v) => patchOllama({topK: v})}
+											/>
+
+											<SliderRow
+												label="Min P"
+												value={ollamaAdvanced().ollamaMinP}
+												min={0}
+												max={1}
+												step={0.01}
+												onInput={(v) => patchOllama({ollamaMinP: v})}
+											/>
+
+											<SliderRow
+												label="TFS Z"
+												value={ollamaAdvanced().ollamaTfsZ}
+												min={0.01}
+												max={1}
+												step={0.01}
+												onInput={(v) => patchOllama({ollamaTfsZ: v})}
+											/>
+
+											<SliderRow
+												label="Typical P"
+												value={ollamaAdvanced().ollamaTypicalP}
+												min={0.01}
+												max={1}
+												step={0.01}
+												onInput={(v) => patchOllama({ollamaTypicalP: v})}
+											/>
+
+											<SliderRow
+												label="繰り返しペナルティ"
+												value={ollamaAdvanced().ollamaRepeatPenalty}
+												min={1}
+												max={2}
+												step={0.01}
+												onInput={(v) => patchOllama({ollamaRepeatPenalty: v})}
+											/>
+
+											<SliderRow
+												label="ペナルティ適用範囲"
+												value={ollamaAdvanced().ollamaRepeatLastN}
+												min={0}
+												max={512}
+												step={1}
+												format={(v) => String(Math.round(v))}
+												onInput={(v) => patchOllama({ollamaRepeatLastN: v})}
+											/>
+
+											<SliderRow
+												label="Presence Penalty"
+												value={ollamaAdvanced().ollamaPresencePenalty}
+												min={0}
+												max={2}
+												step={0.05}
+												onInput={(v) => patchOllama({ollamaPresencePenalty: v})}
+											/>
+
+											<SliderRow
+												label="Frequency Penalty"
+												value={ollamaAdvanced().ollamaFrequencyPenalty}
+												min={0}
+												max={2}
+												step={0.05}
+												onInput={(v) =>
+													patchOllama({ollamaFrequencyPenalty: v})
+												}
+											/>
+
+											<div class={styles.settingGroup}>
+												<span class={styles.settingLabel}>
+													シード (空欄 = ランダム)
+												</span>
+												<input
+													type="number"
+													class={styles.numberInput}
+													value={
+														ollamaAdvanced().seed !== null
+															? (ollamaAdvanced().seed ?? '')
+															: ''
+													}
+													placeholder="ランダム"
+													min={0}
+													onInput={(e) => {
+														const val = e.currentTarget.value;
+														patchOllama({
+															seed: val === '' ? null : Number(val),
+														});
+													}}
+												/>
+											</div>
+
+											<div class={styles.settingGroup}>
+												<span class={styles.settingLabel}>
+													停止シーケンス (1 行 1 つ)
+												</span>
+												<textarea
+													class={styles.textareaInput}
+													value={ollamaAdvanced().stopSequences.join('\n')}
+													rows={3}
+													placeholder={'例：\n「\n」'}
+													onInput={(e) =>
+														patchOllama({
+															stopSequences: e.currentTarget.value
+																.split('\n')
+																.map((s) => s.trim())
+																.filter((s) => s.length > 0),
+														})
+													}
+												/>
 											</div>
 										</Show>
 									</div>

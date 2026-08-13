@@ -33,12 +33,28 @@ export interface AiNovelAdvancedSettings {
 	multilingualMode: boolean;
 }
 
+export interface OllamaAdvancedSettings {
+	ollamaModel: string;
+	topP: number;
+	topK: number;
+	seed: number | null;
+	stopSequences: string[];
+	ollamaMinP: number;
+	ollamaTfsZ: number;
+	ollamaTypicalP: number;
+	ollamaRepeatPenalty: number;
+	ollamaRepeatLastN: number;
+	ollamaPresencePenalty: number;
+	ollamaFrequencyPenalty: number;
+}
+
 interface NovelSettings {
-	model: 'gemini' | 'ainovel';
+	model: 'gemini' | 'ainovel' | 'ollama';
 	temperature: number;
 	maxTokens: number;
 	geminiAdvanced: GeminiAdvancedSettings;
 	ainovelAdvanced: AiNovelAdvancedSettings;
+	ollamaAdvanced: OllamaAdvancedSettings;
 }
 
 const DEFAULT_GEMINI_ADVANCED: GeminiAdvancedSettings = {
@@ -65,6 +81,21 @@ const DEFAULT_AINOVEL_ADVANCED: AiNovelAdvancedSettings = {
 	repPenPres: 0,
 	stopTokens: '',
 	multilingualMode: false,
+};
+
+const DEFAULT_OLLAMA_ADVANCED: OllamaAdvancedSettings = {
+	ollamaModel: 'llama3',
+	topP: 0.9,
+	topK: 40,
+	seed: null,
+	stopSequences: [],
+	ollamaMinP: 0,
+	ollamaTfsZ: 1.0,
+	ollamaTypicalP: 1.0,
+	ollamaRepeatPenalty: 1.1,
+	ollamaRepeatLastN: 64,
+	ollamaPresencePenalty: 0,
+	ollamaFrequencyPenalty: 0,
 };
 
 function loadNovelSettings(novelId: string): Partial<NovelSettings> {
@@ -111,7 +142,7 @@ export function useEditor() {
 	>('saved');
 
 	const savedSettings = loadNovelSettings(params.id);
-	const [model, setModel] = createSignal<'gemini' | 'ainovel'>(
+	const [model, setModel] = createSignal<'gemini' | 'ainovel' | 'ollama'>(
 		savedSettings.model ?? 'gemini',
 	);
 	const [temperature, setTemperature] = createSignal(
@@ -130,6 +161,11 @@ export function useEditor() {
 			...DEFAULT_AINOVEL_ADVANCED,
 			...(savedSettings.ainovelAdvanced ?? {}),
 		});
+	const [ollamaAdvanced, setOllamaAdvanced] =
+		createSignal<OllamaAdvancedSettings>({
+			...DEFAULT_OLLAMA_ADVANCED,
+			...(savedSettings.ollamaAdvanced ?? {}),
+		});
 
 	const [isGenerating, setIsGenerating] = createSignal(false);
 	const [generateError, setGenerateError] = createSignal('');
@@ -141,6 +177,7 @@ export function useEditor() {
 			maxTokens: maxTokens(),
 			geminiAdvanced: geminiAdvanced(),
 			ainovelAdvanced: ainovelAdvanced(),
+			ollamaAdvanced: ollamaAdvanced(),
 		});
 	});
 
@@ -203,36 +240,56 @@ export function useEditor() {
 		try {
 			const gAdv = geminiAdvanced();
 			const aAdv = ainovelAdvanced();
-			const genParams: GenerationParams =
-				model() === 'gemini'
-					? {
-							temperature: temperature(),
-							maxTokens: maxTokens(),
-							geminiModel: gAdv.geminiModel,
-							topP: gAdv.topP,
-							topK: gAdv.topK,
-							frequencyPenalty: gAdv.frequencyPenalty,
-							presencePenalty: gAdv.presencePenalty,
-							seed: gAdv.seed,
-							stopSequences: gAdv.stopSequences,
-						}
-					: {
-							temperature: temperature(),
-							maxTokens: maxTokens(),
-							ainovelModel: aAdv.ainovelModel,
-							topP: aAdv.topP,
-							topK: aAdv.topK,
-							topA: aAdv.topA,
-							minP: aAdv.minP,
-							typicalP: aAdv.typicalP,
-							tailfree: aAdv.tailfree,
-							repPen: aAdv.repPen,
-							repPenRange: aAdv.repPenRange,
-							repPenSlope: aAdv.repPenSlope,
-							repPenPres: aAdv.repPenPres,
-							stopTokens: aAdv.stopTokens,
-							multilingualMode: aAdv.multilingualMode,
-						};
+			const oAdv = ollamaAdvanced();
+			let genParams: GenerationParams;
+			if (model() === 'gemini') {
+				genParams = {
+					temperature: temperature(),
+					maxTokens: maxTokens(),
+					geminiModel: gAdv.geminiModel,
+					topP: gAdv.topP,
+					topK: gAdv.topK,
+					frequencyPenalty: gAdv.frequencyPenalty,
+					presencePenalty: gAdv.presencePenalty,
+					seed: gAdv.seed,
+					stopSequences: gAdv.stopSequences,
+				};
+			} else if (model() === 'ainovel') {
+				genParams = {
+					temperature: temperature(),
+					maxTokens: maxTokens(),
+					ainovelModel: aAdv.ainovelModel,
+					topP: aAdv.topP,
+					topK: aAdv.topK,
+					topA: aAdv.topA,
+					minP: aAdv.minP,
+					typicalP: aAdv.typicalP,
+					tailfree: aAdv.tailfree,
+					repPen: aAdv.repPen,
+					repPenRange: aAdv.repPenRange,
+					repPenSlope: aAdv.repPenSlope,
+					repPenPres: aAdv.repPenPres,
+					stopTokens: aAdv.stopTokens,
+					multilingualMode: aAdv.multilingualMode,
+				};
+			} else {
+				genParams = {
+					temperature: temperature(),
+					maxTokens: maxTokens(),
+					topP: oAdv.topP,
+					topK: oAdv.topK,
+					seed: oAdv.seed,
+					stopSequences: oAdv.stopSequences,
+					ollamaModel: oAdv.ollamaModel,
+					ollamaMinP: oAdv.ollamaMinP,
+					ollamaTfsZ: oAdv.ollamaTfsZ,
+					ollamaTypicalP: oAdv.ollamaTypicalP,
+					ollamaRepeatPenalty: oAdv.ollamaRepeatPenalty,
+					ollamaRepeatLastN: oAdv.ollamaRepeatLastN,
+					ollamaPresencePenalty: oAdv.ollamaPresencePenalty,
+					ollamaFrequencyPenalty: oAdv.ollamaFrequencyPenalty,
+				};
+			}
 
 			const result = await generateCompletion({
 				novelId: params.id,
@@ -265,6 +322,8 @@ export function useEditor() {
 		setGeminiAdvanced,
 		ainovelAdvanced,
 		setAinovelAdvanced,
+		ollamaAdvanced,
+		setOllamaAdvanced,
 		isGenerating,
 		generateError,
 		onTitleInput,
