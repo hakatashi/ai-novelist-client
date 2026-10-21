@@ -38,6 +38,15 @@ export interface GenerationParams {
 	repPenPres?: number;
 	stopTokens?: string;
 	multilingualMode?: boolean;
+	// Ollama-specific
+	ollamaModel?: string;
+	ollamaMinP?: number;
+	ollamaTfsZ?: number;
+	ollamaTypicalP?: number;
+	ollamaRepeatPenalty?: number;
+	ollamaRepeatLastN?: number;
+	ollamaPresencePenalty?: number;
+	ollamaFrequencyPenalty?: number;
 }
 
 export interface Generation extends DocumentData {
