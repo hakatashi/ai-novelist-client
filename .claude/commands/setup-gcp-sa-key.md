@@ -73,6 +73,7 @@ env:
 
 - `gh` コマンドは `GITHUB_TOKEN=""` を先頭に付けて実行すること (project スコープを持つ `~/.config/gh` のトークンを使用するため)
 - 旧来の functions が本番に残っている場合、非インタラクティブデプロイは失敗する。先に手動削除が必要:
+
   ```bash
   firebase functions:delete <関数名> --region us-central1 --project "$PROJECT" --force
   ```

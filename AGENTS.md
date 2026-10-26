@@ -10,13 +10,14 @@
 
 各フェーズの実装タスクを GitHub Project で管理しています。**新機能の実装完了時は必ずプロジェクトのステータスを更新してください。**
 
-| ステータス | 意味 |
-|---|---|
-| Todo | 未着手 |
+| ステータス  | 意味                        |
+| ----------- | --------------------------- |
+| Todo        | 未着手                      |
 | In Progress | 実装中 (PRがオープンの状態) |
-| Done | 実装完了・マージ済み |
+| Done        | 実装完了・マージ済み        |
 
 ### ステータス更新コマンド例
+
 ```bash
 # Issue をクローズ (Done に相当)
 GITHUB_TOKEN="" gh issue close <issue番号> --repo hakatashi/ai-novelist-client
@@ -111,10 +112,10 @@ novels/{novelId}/generations/{genId}
 
 ### Secret Manager 使用状況
 
-| シークレット名 | 用途 | 利用フェーズ |
-|---|---|---|
-| `GEMINI_API_KEY` | Google AI Gemini API | Phase 1 (実装済み) |
-| `AINOBEL_API_KEY` | AIのべりすとAPI JWT | Phase 2 (未実装) |
+| シークレット名    | 用途                 | 利用フェーズ       |
+| ----------------- | -------------------- | ------------------ |
+| `GEMINI_API_KEY`  | Google AI Gemini API | Phase 1 (実装済み) |
+| `AINOBEL_API_KEY` | AIのべりすとAPI JWT  | Phase 2 (未実装)   |
 
 無料枠: 1プロジェクトあたり月6シークレットバージョンまで。現在2個使用予定。
 
@@ -145,13 +146,13 @@ novels/{novelId}/generations/{genId}
 
 ### Firebase emulator 構成
 
-| サービス | ポート |
-|---|---|
-| Firestore | 9935 |
-| Auth | 9099 |
-| Hosting | 5000 |
-| Functions | 5001 |
-| Emulator UI | 4000 |
+| サービス    | ポート |
+| ----------- | ------ |
+| Firestore   | 9935   |
+| Auth        | 9099   |
+| Hosting     | 5000   |
+| Functions   | 5001   |
+| Emulator UI | 4000   |
 
 ---
 
@@ -172,15 +173,18 @@ novels/{novelId}/generations/{genId}
 - APIリファレンス: https://ai-novel.com/account_api_help.php
 
 #### 複数候補生成 (A)
+
 - Functions の `generateCompletion` を拡張: `count` パラメータで複数候補を並列生成 (`Promise.all`)
 - フロントエンド: 候補をカード表示し、テキストを選択・結合してエディタに取り込むUI
 
 #### Fill-in-the-Middle (B)
+
 - エディタでカーソル位置を取得し、前後のテキストを分割
 - Gemini API の場合: プロンプト構築で `prefix + ___BLANK___ + suffix` を指定し、空欄を埋めさせる
 - AIのべりすと API の場合: infix補完エンドポイントがあれば使用
 
 #### Chat LLM擬似補完モード (C)
+
 - 「最後の文」の自動判定: 末尾から最後の句点 (。) を探し、その次の文字位置以降を「最後の文」とする
 - プロンプトテンプレートをバックエンドで構築し `generateContent` に送信
 - フロントエンドに「生成スタイル入力欄」を追加 (サイドバーのAI設定パネル内)
@@ -188,15 +192,18 @@ novels/{novelId}/generations/{genId}
 ### Phase 3: 閲覧・インポート機能
 
 #### 作品閲覧画面 (`/novels/:id/read`)
+
 - 日本語小説向けタイポグラフィ設定 (縦書き/横書き、フォント、文字サイズ、背景色)
 - CSS `writing-mode: vertical-rl` で縦書き実装
 - 設定は `localStorage` に保存
 
 #### えあ草子連携
+
 - Firebase Storage に青空文庫形式 `.txt` をアップロードし、公開URLを取得
 - `https://www.satokazzz.com/airzoshi/reader.php?url=<encoded-url>&title=<title>&home=<appUrl>` を新タブで開く
 
 #### インポート機能
+
 - `.txt` (UTF-8): そのまま `body` にセット
 - `.novel` (AIのべりすと形式): JSONパースして `body` を抽出
 - UI: ドラッグ&ドロップ or ファイル選択
@@ -227,7 +234,6 @@ npm run deploy:all   # 全サービスをFirebaseにデプロイ
 ## APIキー管理
 
 **絶対にコードにハードコードしない**。
-
 - **本番**: Google Cloud Secret Manager → Firebase Functions が実行時に取得 (`defineSecret`)
 - **ローカル**: `functions/.env.ai-novelist-client` (gitignore済み)
 
