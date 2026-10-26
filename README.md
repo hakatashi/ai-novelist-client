@@ -11,16 +11,16 @@ LLMを活用した個人向け小説執筆支援Webアプリケーション。�
 
 ## 技術スタック
 
-| 層 | 技術 |
-|---|---|
-| フロントエンド | [Solid Start](https://start.solidjs.com/) (SPA mode) |
-| バックエンド | Firebase Functions (Node.js 22) |
-| データベース | Cloud Firestore |
-| 認証 | Firebase Authentication (Google) |
-| シークレット管理 | Google Cloud Secret Manager |
-| ホスティング | Firebase Hosting |
-| ビルドツール | Vinxi / Vite |
-| Linter/Formatter | Biome |
+| 層               | 技術                                                 |
+| ---------------- | ---------------------------------------------------- |
+| フロントエンド   | [Solid Start](https://start.solidjs.com/) (SPA mode) |
+| バックエンド     | Firebase Functions (Node.js 22)                      |
+| データベース     | Cloud Firestore                                      |
+| 認証             | Firebase Authentication (Google)                     |
+| シークレット管理 | Google Cloud Secret Manager                          |
+| ホスティング     | Firebase Hosting                                     |
+| ビルドツール     | Vinxi / Vite                                         |
+| Linter/Formatter | Biome                                                |
 
 ## ローカル開発
 
