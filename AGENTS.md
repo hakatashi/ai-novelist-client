@@ -81,6 +81,7 @@ functions/src/
 ```
 
 **Functions重要事項**:
+
 - `firebase-functions/v2/https` の `onCall` を使用 (v2 API)
 - `defineSecret('GEMINI_API_KEY')` でSecret Managerからキーを取得
 - エミュレーター時は `functions/.env.ai-novelist-client` からキーを読む (Secret Managerは呼ばない)
@@ -163,11 +164,13 @@ novels/{novelId}/generations/{genId}
 #### 追加LLMバックエンド
 
 **Ollama (ローカル)**
+
 - Functions から `http://host.docker.internal:11434/api/generate` に POST
 - `model` フィールドに Ollama のモデル名 (例: `llama3`)
 - エミュレーター環境では `localhost:11434` を使用
 
 **AIのべりすと API**
+
 - エンドポイント: https://api.ai-novel.com/api
 - 認証: `Authorization: Bearer <AINOBEL_API_KEY>` (Secret Manager の `AINOBEL_API_KEY` を使用)
 - APIリファレンス: https://ai-novel.com/account_api_help.php
@@ -234,10 +237,12 @@ npm run deploy:all   # 全サービスをFirebaseにデプロイ
 ## APIキー管理
 
 **絶対にコードにハードコードしない**。
+
 - **本番**: Google Cloud Secret Manager → Firebase Functions が実行時に取得 (`defineSecret`)
 - **ローカル**: `functions/.env.ai-novelist-client` (gitignore済み)
 
 本番へのシークレット設定:
+
 ```bash
 echo -n "<API_KEY>" | gcloud secrets create GEMINI_API_KEY --data-file=-
 ```
